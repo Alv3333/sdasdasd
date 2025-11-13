@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Web Browser with Tabs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #tabs {
+            display: flex;
+            background: #333;
+            color: white;
+            padding: 10px;
+        }
+        .tab {
+            padding: 10px;
+            cursor: pointer;
+            background: #555;
+            margin-right: 5px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        .tab.active {
+            background: #007bff;
+        }
+        .close-tab {
+            margin-left: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        #controls {
+            display: flex;
+            padding: 10px;
+            background: #ddd;
+        }
+        input {
+            flex: 1;
+            padding: 5px;
+        }
+        button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .iframe-container {
+            display: none;
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+        }
+        .iframe-container.active {
+            display: block;
+        }
+        iframe {
+            width: 100%;
+            height: 90vh;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="tabs">
+        <button onclick="newTab()">➕ New Tab</button>
+    </div>
+
+    <div id="controls">
+        <input type="text" id="url" placeholder="Enter URL">
+        <button onclick="loadPage()">Go</button>
+    </div>
+
+    <div id="browsers"></div>
+
+    <script>
+        let tabCount = 0;
+        let activeTab = null;
+
+        // Create a new tab
+        function newTab() {
+            tabCount++;
+            const tabId = "tab" + tabCount;
+
+            // Create new tab button
+            const tabButton = document.createElement("div");
+            tabButton.className = "tab";
+            tabButton.textContent = "Tab " + tabCount;
+
+            // Add close button to the tab
+            const closeButton = document.createElement("span");
+            closeButton.className = "close-tab";
+            closeButton.textContent = "🗙";
+            closeButton.onclick = () => closeTab(tabId);
+            tabButton.appendChild(closeButton);
+
+            tabButton.onclick = () => switchTab(tabId);
+            tabButton.setAttribute("data-tab", tabId);
+            document.getElementById("tabs").appendChild(tabButton);
+
+            // Create iframe container
+            const iframeContainer = document.createElement("div");
+            iframeContainer.className = "iframe-container";
+            iframeContainer.id = tabId;
+
+            const iframe = document.createElement("iframe");
+            iframe.src = "about:blank"; // Default blank page
+            iframeContainer.appendChild(iframe);
+
+            document.getElementById("browsers").appendChild(iframeContainer);
+
+            switchTab(tabId); // Make it active
+        }
+
+        // Switch between tabs
+        function switchTab(tabId) {
+            document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+            document.querySelectorAll(".iframe-container").forEach(container => container.classList.remove("active"));
+
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add("active");
+            document.getElementById(tabId).classList.add("active");
+
+            activeTab = tabId;
+        }
+
+        // Load a page in the active tab
+        function loadPage() {
+            if (!activeTab) {
+                alert("Open a new tab first!");
+                return;
+            }
+            let url = document.getElementById('url').value;
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url; // Automatically add https:// if missing
+            }
+            document.getElementById(activeTab).querySelector("iframe").src = url;
+        }
+
+        // Close the specified tab
+        function closeTab(tabId) {
+            // If this is the active tab, switch to another tab
+            if (tabId === activeTab) {
+                const tabs = document.querySelectorAll(".tab");
+                const currentTabIndex = Array.from(tabs).findIndex(tab => tab.getAttribute("data-tab") === tabId);
+                const nextTab = tabs[currentTabIndex + 1] || tabs[currentTabIndex - 1];
+                if (nextTab) {
+                    switchTab(nextTab.getAttribute("data-tab"));
+                }
+            }
+
+            // Remove the tab and its corresponding iframe container
+            document.querySelector(`[data-tab="${tabId}"]`).remove();
+            document.getElementById(tabId).remove();
+        }
+
+        // Initialize with one tab
+        newTab();
+    </script>
+
+</body>
+</html>
